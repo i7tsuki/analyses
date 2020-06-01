@@ -1,0 +1,28 @@
+@charset 'UTF-8';
+
+.table-input th:first-child, 
+.table-input td:first-child
+{
+  /* 横スクロール時に固定する */
+  position: -webkit-sticky;
+  position: sticky;
+  left: 0;
+}
+
+.table-input tr > th:first-child {
+	background: #F2F2F2;
+}
+
+.table-input tr:nth-child(odd) > td:first-child {
+	background: #F2F2F2;
+}
+
+.table-input tr:nth-child(even) > td:first-child {
+	background: #FFFFFF;
+}
+
+.table-calc tr > th:first-child,
+.table-calc tr > td:first-child
+{
+    width: 200px;
+}
