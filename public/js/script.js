@@ -1,5 +1,12 @@
 //JQuery
 $(function() {
+    'use strict';
+    
+    // フラッシュメッセージのfadeout
+    $(function(){
+        $('.flash_message').fadeOut(1500);
+    });
+    
     //1月
     function update_deduction_amount(month) {
         

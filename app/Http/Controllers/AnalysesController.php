@@ -65,11 +65,12 @@ class AnalysesController extends Controller
             // 折れ線グラフの最大値の設定
             $max_digit = strlen((string)$deduction_amount_max);     //最大差引金額の桁数取得
             
-            if ((int)(substr(((string)$deduction_amount_max), 0, 1)) > 4) {     //差引金額の頭の数字が四捨五入で、桁数が増えるか？
-                $max_digit += 1;
-                $deduction_amount_max = (int)('1' . str_repeat('0', $max_digit-1));     //グラフの最大値を設定する
+            if ((int)(substr(((string)$deduction_amount_max), 1, 1)) > 4) {     //差引金額の2桁目の数字が四捨五入で、桁数が増えるか？
+                $first_num = (int)substr(((string)$deduction_amount_max), 0, 1) + 1;
+                $deduction_amount_max = (int)((string)$first_num . str_repeat('0', $max_digit-1));  //グラフの最大値を設定する
             } else {
-                $deduction_amount_max = (int)('5' . str_repeat('0', $max_digit-1));     //グラフの最大値を設定する
+                $first_num = substr(((string)$deduction_amount_max), 0, 1);
+                $deduction_amount_max = (int)($first_num . '5' . str_repeat('0', $max_digit-2));     //グラフの最大値を設定する
             }
             
             // 折れ線グラフの最小値の設定
@@ -79,13 +80,13 @@ class AnalysesController extends Controller
             } else {
                 $min_digit = strlen((string)-$deduction_amount_min);     //最小差引金額の桁数取得
                 
-                if ((int)(substr(((string)$deduction_amount_min), 0, 1)) > 4) {     //差引金額の頭の数字が四捨五入で、桁数が増えるか？
-                    $min_digit += 1;
-                    $deduction_amount_min = -(int)('1' . str_repeat('0', $min_digit-1));     //グラフの最小値を設定する
+                if ((int)(substr(((string)$deduction_amount_min), 2, 1)) > 4) {     //差引金額の頭の数字が四捨五入で、桁数が増えるか？
+                    $first_num = (int)substr(((string)$deduction_amount_min), 1, 1) + 1;
+                    $deduction_amount_min = -(int)((string)$first_num . str_repeat('0', $min_digit-1));  //グラフの最大値を設定する
                 } else {
-                    $deduction_amount_min = -(int)('5' . str_repeat('0', $min_digit-1));     //グラフの最小値を設定する
+                    $first_num = substr(((string)$deduction_amount_min), 1, 1);
+                    $deduction_amount_min = -(int)($first_num . '5' . str_repeat('0', $min_digit-2));     //グラフの最小値を設定する
                 }
-                
             }
             
             // 折れ線グラフの縦軸の金額単位を設定
@@ -96,13 +97,13 @@ class AnalysesController extends Controller
             //棒グラフの最大値の設定
             $max_digit = strlen((string)max($accumulation_array));     //最大累積金額の桁数取得
             
-            if ((int)(substr(((string)max($accumulation_array)), 0, 1)) > 4) {     //累積金額の頭の数字が四捨五入で、桁数が増えるか？
-                $max_digit += 1;
-                $accumulation_amount_max = (int)('1' . str_repeat('0', $max_digit-1));     //グラフの最大値を設定する
+            if ((int)(substr(((string)max($accumulation_array)), 1, 1)) > 4) {     //差引金額の2桁目の数字が四捨五入で、桁数が増えるか？
+                $first_num = (int)substr(((string)max($accumulation_array)), 0, 1) + 1;
+                $accumulation_amount_max = (int)((string)$first_num . str_repeat('0', $max_digit-1));  //グラフの最大値を設定する
             } else {
-                $accumulation_amount_max = (int)('5' . str_repeat('0', $max_digit-1));     //グラフの最大値を設定する
+                $first_num = substr(((string)max($accumulation_array)), 0, 1);
+                $accumulation_amount_max = (int)($first_num . '5' . str_repeat('0', $max_digit-2));     //グラフの最大値を設定する
             }
-            
             
             //棒グラフの最小値の設定
             if (min($accumulation_array) > -1)  //最小値が0以上なら、グラフの最小値は0とする
@@ -111,14 +112,16 @@ class AnalysesController extends Controller
             } else {
                 $min_digit = strlen((string)-min($accumulation_array));     //最小差引金額の桁数取得
                 
-                if ((int)(substr((string)min($accumulation_array), 0, 1)) > 4) {     //差引金額の頭の数字が四捨五入で、桁数が増えるか？
-                    $min_digit += 1;
-                    $accumulation_amount_min = -(int)('1' . str_repeat('0', $min_digit-1));     //グラフの最小値を設定する
+                if ((int)(substr(((string)min($accumulation_array)), 2, 1)) > 4) {     //差引金額の頭の数字が四捨五入で、桁数が増えるか？
+                    $first_num = (int)substr(((string)min($accumulation_array)), 1, 1) + 1;
+                    $accumulation_amount_min = -(int)((string)$first_num . str_repeat('0', $min_digit-1));  //グラフの最大値を設定する
                 } else {
-                    $accumulation_amount_min = -(int)('5' . str_repeat('0', $min_digit-1));     //グラフの最小値を設定する
+                    $first_num = substr(((string)min($accumulation_array)), 1, 1);
+                    $accumulation_amount_min = -(int)($first_num . '5' . str_repeat('0', $min_digit-2));     //グラフの最小値を設定する
                 }
-                
             }
+            
+            
             
             //棒グラフの縦軸の金額単位を設定
             $bar_graph_step = ($accumulation_amount_max - $accumulation_amount_min) /10;
@@ -224,6 +227,7 @@ class AnalysesController extends Controller
                 $pl->save();
             }
         }
+        \Session::flash('flash_message', '更新が完了しました');
         return redirect('/');
     }
     
@@ -344,6 +348,7 @@ class AnalysesController extends Controller
             
             $deduction->save();
         }
+        \Session::flash('flash_message', '更新が完了しました');
         return redirect('/');
     }
     
@@ -409,18 +414,18 @@ class AnalysesController extends Controller
             }
             
             //生命保険料控除
-            $life_new_deduction1 = life_deducation($deduction->sum('life_premium_new'), 0);
-            $life_new_deduction2 = life_deducation($deduction->sum('ltc_premium'), 0);
-            $life_new_deduction3 = life_deducation($deduction->sum('pension_new'), 0);
+            $life_new_deduction1 = Helper::life_deducation($deduction->sum('life_premium_new'), 0);
+            $life_new_deduction2 = Helper::life_deducation($deduction->sum('ltc_premium'), 0);
+            $life_new_deduction3 = Helper::life_deducation($deduction->sum('pension_new'), 0);
             
-            $life_old_deduction1 = life_deducation($deduction->sum('life_premium_old'), 1);
-            $life_old_deduction2 = life_deducation($deduction->sum('pension_old'), 1);
+            $life_old_deduction1 = Helper::life_deducation($deduction->sum('life_premium_old'), 1);
+            $life_old_deduction2 = Helper::life_deducation($deduction->sum('pension_old'), 1);
             
             
             //　　上限額を考慮して、生命保険料控除を算出する.
             $life_result = [];
-            array_push($life_result, life_max($life_new_deduction1, $life_new_deduction2, $life_new_deduction3, 0)); 
-            array_push($life_result, life_max($life_new_deduction1, $life_new_deduction2, ['income_tax' => 0, 'resident_tax' => 0], 1)); 
+            array_push($life_result, Helper::life_max($life_new_deduction1, $life_new_deduction2, $life_new_deduction3, 0)); 
+            array_push($life_result, Helper::life_max($life_new_deduction1, $life_new_deduction2, ['income_tax' => 0, 'resident_tax' => 0], 1)); 
             
             
             //地震保険料控除
@@ -475,7 +480,7 @@ class AnalysesController extends Controller
             {   
                 if ($deduction->sum('spouse_income') > 380000)   //配偶者所得が38万円超の場合（配偶者特別控除の判定）
                 {
-                    array_push($spouse_deduction, spose_special($income_amount, $deduction->sum('spouse_income'), 0));
+                    array_push($spouse_deduction, Helper::spose_special($income_amount, $deduction->sum('spouse_income'), 0));
                     
                 } else {  //配偶者所得がnull又は38万円以下の場合
                     if ($deduction->sum('spouse_old') === 1)   //老人控除対象配偶者の場合
@@ -517,7 +522,7 @@ class AnalysesController extends Controller
             {   
                 if ($deduction->sum('spouse_income') > 380000)   //配偶者所得が38万円超の場合（配偶者特別控除の判定）
                 {
-                    array_push($spouse_deduction, spose_special($income_amount, $deduction->sum('spouse_income'), 1));
+                    array_push($spouse_deduction, Helper::spose_special($income_amount, $deduction->sum('spouse_income'), 1));
                     
                 } else {  //配偶者所得がnull又は38万円以下の場合
                     if ($deduction->sum('spouse_old') === 1)   //老人控除対象配偶者の場合
@@ -661,250 +666,3 @@ class AnalysesController extends Controller
     }
 }
 
-
-/*
- * 生命保険料　控除（個別）を算出する
- * 
-**/
-function life_deducation($money, $type)
-{   
-    $income_tax = 0;
-    $resident_tax = 0;
-    
-    if($type === 1) { //新　生命保険料控除
-        //所得税
-        if($money <= 20000) 
-        {
-            $income_tax = $money;
-        } elseif ($money <= 40000) {
-            $income_tax = (($money / 2) + 10000);
-        } elseif ($money <= 80000) {
-            $income_tax =  (($money / 4) + 20000);
-        } else {
-            $income_tax =  40000;
-        }
-         
-        //住民税
-        if($money <= 12000) 
-        {
-            $resident_tax = $money;
-        } elseif ($money <= 32000) {
-            $resident_tax = (($money / 2) + 6000);
-        } elseif ($money <= 56000) {
-            $resident_tax =  (($money / 4) + 14000);
-        } else {
-            $resident_tax =  28000;
-        }
-        
-    } else {//旧　生命保険料控除
-        
-        //所得税
-        if($money <= 25000) 
-        {
-            $income_tax = $money;
-        } elseif ($money <= 50000) {
-            $income_tax = (($money / 2) + 12500);
-        } elseif ($money <= 100000) {
-            $income_tax =  (($money / 4) + 25000);
-        } else {
-            $income_tax =  50000;
-        }
-         
-        //住民税
-        if($money <= 15000) 
-        {
-            $resident_tax = $money;
-        } elseif ($money <= 40000) {
-            $resident_tax = (($money / 2) + 7500);
-        } elseif ($money <= 70000) {
-            $resident_tax =  (($money / 4) + 17500);
-        } else {
-            $resident_tax =  35000;
-        }
-    }
-    
-    return array('income_tax' => $income_tax, 'resident_tax' => $resident_tax);
-}    
-
-
-/*
- * 生命保険料　上限額を考慮して、控除額（全体）を算出する
- * 
-**/
-
-function life_max($money_array1, $money_array2, $money_array3, $type)
-{   
-    if($type===0){ //所得税
-        
-        if (($money_array1['income_tax']+$money_array2['income_tax']+$money_array3['income_tax']) > 120000) {
-            return 120000;
-        } else {
-            return $money_array1['income_tax']+$money_array2['income_tax']+$money_array3['income_tax'];
-        }
-    } else { //住民税
-        
-        if (($money_array1['resident_tax']+$money_array2['resident_tax']+$money_array3['resident_tax']) > 70000) {
-            return 70000;
-        } else {
-            return $money_array1['resident_tax']+$money_array2['resident_tax']+$money_array3['resident_tax'];
-        }
-    }
-}
-
-
-/*
- * 配偶者特別控除額を求める
- * 
-**/
-function spose_special($income_amount, $spouse_income, $type)
-{
-    if ($spouse_income <= 380000)   //もし、配偶者所得38万円以下の場合で、メソッドが呼び出された場合
-    {
-        return 0;       
-    } 
-    else if ($spouse_income <= 850000) 
-    {
-        if ($income_amount <= 9000000) 
-        {
-            if ($type ===0) 
-            {
-                return 380000;
-            } else {
-                return 330000;
-            }
-        } elseif ($income_amount <= 9500000) {
-            if ($type ===0) 
-            {
-                return 260000;
-            } else {
-                return 220000;
-            }
-        } elseif ($income_amount <= 10000000) {
-            if ($type ===0) 
-            {
-                return 130000;
-            } else {
-                return 110000;
-            } 
-        } else {
-            return 0;
-        }
-    }
-    else if ($spouse_income <= 900000) 
-    {
-        if ($income_amount <= 9000000) 
-        {
-            if ($type ===0) 
-            {
-                return 360000;
-            } else {
-                return 330000;
-            }
-        } elseif ($income_amount <= 9500000) {
-            if ($type ===0) 
-            {
-                return 240000;
-            } else {
-                return 220000;
-            }
-        } elseif ($income_amount <= 10000000) {
-            if ($type ===0) 
-            {
-                return 120000;
-            } else {
-                return 110000;
-            } 
-        } else {
-            return 0;
-        }
-    }
-    else if ($spouse_income <= 950000) 
-    {
-        if ($income_amount <= 9000000) 
-        {
-            return 310000;
-        } elseif ($income_amount <= 9500000) {
-            return 210000;
-        } elseif ($income_amount <= 10000000) {
-            return 110000;
-        } else {
-            return 0;
-        }
-    }    
-    else if ($spouse_income <= 1000000) 
-    {
-        if ($income_amount <= 9000000) {
-            return 260000;
-        } elseif ($income_amount <= 9500000) {
-            return 180000;
-        } elseif ($income_amount <= 10000000) {
-            return 90000;
-        } else {
-            return 0;
-        }
-    }   
-    else if ($spouse_income <= 1050000) 
-    {
-        if ($income_amount <= 9000000) {
-            return 210000;
-        } elseif ($income_amount <= 9500000) {
-            return 140000;
-        } elseif ($income_amount <= 10000000) {
-            return 70000;
-        } else {
-            return 0;
-        }
-    }   
-    else if ($spouse_income <= 1100000) 
-    {
-        if ($income_amount <= 9000000) {
-            return 160000;
-        } elseif ($income_amount <= 9500000) {
-            return 110000;
-        } elseif ($income_amount <= 10000000) {
-            return 60000;
-        } else {
-            return 0;
-        }
-    }  
-    else if ($spouse_income <= 1150000) 
-    {
-        if ($income_amount <= 9000000) {
-            return 110000;
-        } elseif ($income_amount <= 9500000) {
-            return 80000;
-        } elseif ($income_amount <= 10000000) {
-            return 40000;
-        } else {
-            return 0;
-        }
-    }  
-    else if ($spouse_income <= 1200000) 
-    {
-        if ($income_amount <= 9000000) {
-            return 60000;
-        } elseif ($income_amount <= 9500000) {
-            return 40000;
-        } elseif ($income_amount <= 10000000) {
-            return 20000;
-        } else {
-            return 0;
-        }
-    }  
-    else if ($spouse_income <= 1230000) 
-    {
-        if ($income_amount <= 9000000) {
-            return 30000;
-        } elseif ($income_amount <= 9500000) {
-            return 20000;
-        } elseif ($income_amount <= 10000000) {
-            return 10000;
-        } else {
-            return 0;
-        }
-    }  
-    else 
-    {
-        return 0;
-    }
-}
