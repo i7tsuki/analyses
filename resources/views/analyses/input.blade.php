@@ -22,7 +22,7 @@
             </tr>
             <tr>
                 <td class="test">売上高</td>
-                <td><input type="text" class="january-plus" name="val[]" value="{{ $profit_and_loss->where('year', 2020)->where('month', 1)->first()->sales}}"></td>
+                <td><input type="text" class="january-plus" name="val[]" value="{{ $profit_and_loss->where('year', 2020)->where('month', 1)->sum('sales')}}"></td>
                 <td><input type="text" class="february-plus" name="val[]" value="{{ $profit_and_loss->where('year', 2020)->where('month', 2)->sum('sales')}}"></td>
                 <td><input type="text" class="march-plus" name="val[]" value="{{ $profit_and_loss->where('year', 2020)->where('month', 3)->sum('sales')}}"></td>
                 <td><input type="text" class="april-plus" name="val[]" value="{{ $profit_and_loss->where('year', 2020)->where('month', 4)->sum('sales')}}"></td>

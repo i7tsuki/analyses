@@ -68,12 +68,16 @@ class AnalysesController extends Controller
             // 折れ線グラフの最大値の設定
             $max_digit = strlen((string)$deduction_amount_max);     //最大差引金額の桁数取得
             
-            if ((int)(substr(((string)$deduction_amount_max), 1, 1)) > 4) {     //差引金額の2桁目の数字が四捨五入で、桁数が増えるか？
-                $first_num = (int)substr(((string)$deduction_amount_max), 0, 1) + 1;
-                $deduction_amount_max = (int)((string)$first_num . str_repeat('0', $max_digit-1));  //グラフの最大値を設定する
+            if ($max_digit > 0 && $max_digit > 1) {
+                if ((int)(substr(((string)$deduction_amount_max), 1, 1)) > 4) {     //差引金額の2桁目の数字が四捨五入で、桁数が増えるか？
+                    $first_num = (int)substr(((string)$deduction_amount_max), 0, 1) + 1;
+                    $deduction_amount_max = (int)((string)$first_num . str_repeat('0', $max_digit-1));  //グラフの最大値を設定する
+                } else {
+                    $first_num = substr(((string)$deduction_amount_max), 0, 1);
+                    $deduction_amount_max = (int)($first_num . '5' . str_repeat('0', $max_digit-2));     //グラフの最大値を設定する
+                }
             } else {
-                $first_num = substr(((string)$deduction_amount_max), 0, 1);
-                $deduction_amount_max = (int)($first_num . '5' . str_repeat('0', $max_digit-2));     //グラフの最大値を設定する
+                $deduction_amount_max = 0;   
             }
             
             // 折れ線グラフの最小値の設定
@@ -100,12 +104,16 @@ class AnalysesController extends Controller
             //棒グラフの最大値の設定
             $max_digit = strlen((string)max($accumulation_array));     //最大累積金額の桁数取得
             
-            if ((int)(substr(((string)max($accumulation_array)), 1, 1)) > 4) {     //差引金額の2桁目の数字が四捨五入で、桁数が増えるか？
-                $first_num = (int)substr(((string)max($accumulation_array)), 0, 1) + 1;
-                $accumulation_amount_max = (int)((string)$first_num . str_repeat('0', $max_digit-1));  //グラフの最大値を設定する
+            if ($max_digit > 0 && $max_digit > 1) {
+                if ((int)(substr(((string)max($accumulation_array)), 1, 1)) > 4) {     //差引金額の2桁目の数字が四捨五入で、桁数が増えるか？
+                    $first_num = (int)substr(((string)max($accumulation_array)), 0, 1) + 1;
+                    $accumulation_amount_max = (int)((string)$first_num . str_repeat('0', $max_digit-1));  //グラフの最大値を設定する
+                } else {
+                    $first_num = substr(((string)max($accumulation_array)), 0, 1);
+                    $accumulation_amount_max = (int)($first_num . '5' . str_repeat('0', $max_digit-2));     //グラフの最大値を設定する
+                }
             } else {
-                $first_num = substr(((string)max($accumulation_array)), 0, 1);
-                $accumulation_amount_max = (int)($first_num . '5' . str_repeat('0', $max_digit-2));     //グラフの最大値を設定する
+                $accumulation_amount_max = 0;
             }
             
             //棒グラフの最小値の設定
@@ -127,9 +135,13 @@ class AnalysesController extends Controller
             
             
             //棒グラフの縦軸の金額単位を設定
-            $bar_graph_step = ($accumulation_amount_max - $accumulation_amount_min) /10;
-
+            if ($accumulation_amount_max === $accumulation_amount_min && $accumulation_amount_max ===0 ) {
+                $bar_graph_step = 0;
+            } else {
+                $bar_graph_step = ($accumulation_amount_max - $accumulation_amount_min) /10;    
+            }
             
+
             //税額を取得
             $calc_details = Helper::calc_details($user, 2020);
                    
