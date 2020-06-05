@@ -31,5 +31,8 @@ Route::group(['middleware' => ['auth']], function () {
         
         Route::get('about', 'AnalysesController@about_show')->name('analyses.about_get');
         Route::post('about', 'AnalysesController@about_store')->name('analyses.about_post');
+        
+        Route::get('user', 'AnalysesController@user_show')->name('analyses.user_get');
+        Route::post('user', 'AnalysesController@user_store')->name('analyses.user_post');
     });
 });

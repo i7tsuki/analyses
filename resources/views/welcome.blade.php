@@ -2,12 +2,24 @@
 
 @section('content')
     @if (Auth::check())
+    
         {{-- Inputページへのリンク --}}
         {!! link_to_route('analyses.input_get', 'Input', [], ['class' => 'btn btn-lg btn-primary']) !!}
         {{-- Calculationページへのリンク --}}
         {!! link_to_route('analyses.calculation', 'Calculation', [], ['class' => 'btn btn-lg btn-primary']) !!}
         {{-- Aboutページへのリンク --}}
         {!! link_to_route('analyses.about_get', 'About', ['id' => $user->id], ['class' => 'btn btn-lg btn-primary']) !!}
+    
+        
+        <table class="table-bordered table-sm table-toppage">
+             <tr>
+                 <td>所得税</td>
+                 <td>{{number_format($calc_details['tax_val'][0]) }}</td>
+                 <td>住民税</td>
+                 <td>{{ number_format($calc_details['tax_val'][1]) }}</td>
+             </tr>
+        </table>
+
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.js"></script>
         <canvas id="myChart"></canvas>

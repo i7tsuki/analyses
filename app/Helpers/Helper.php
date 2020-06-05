@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use App;
+
 class Helper
 {
     // 所得税の計算
@@ -287,8 +289,310 @@ class Helper
     }    
     
     
+    /* 各種税額計算の詳細を返す */
+    public static function calc_details($user, $year)
+    {
+        // 認証済みユーザーの損益を取得
+        $pl = new App\ProfitAndLoss;
+        
+        $profit_and_loss = $pl->where('user_id', $user->id)
+                        ->where('year', $year)->get();
+        
+        // 差引金額
+        $deduction_amount = 0;
+        $deduction_amount += $profit_and_loss->sum('sales');
+        $deduction_amount -= $profit_and_loss->sum('purchase');
+        $deduction_amount -= $profit_and_loss->sum('tax_and_dues');
+        $deduction_amount -= $profit_and_loss->sum('utilities');
+        $deduction_amount -= $profit_and_loss->sum('transportations');
+        $deduction_amount -= $profit_and_loss->sum('communications');
+        $deduction_amount -= $profit_and_loss->sum('entertainments');
+        $deduction_amount -= $profit_and_loss->sum('expendables');
+        $deduction_amount -= $profit_and_loss->sum('salaries');
+        $deduction_amount -= $profit_and_loss->sum('outsourcings');
+        $deduction_amount -= $profit_and_loss->sum('rents');
+        $deduction_amount -= $profit_and_loss->sum('other_costs');
+
+
+        
+        // 認証済みユーザーの個人情報を取得
+        $deduction = $user->deduction()->where('id', $user->id)->where('year', $year)->get();
+        
+        
+        // 青色申告・所得金額
+        if ($deduction->sum('blue_declaration') === 1) 
+        {
+            if ($deduction_amount > 650000)
+            {
+                $income_amount = $deduction_amount - 650000;
+                $blue_declaration_amount = 650000;
+            } else {
+                $blue_declaration_amount = $deduction_amount;
+                $income_amount = 0; 
+            }
+        } else {
+            $blue_declaration_amount = 0;
+            $income_amount = $deduction_amount;
+        }
+        
+        //社会保険料控除
+        if (null !== $deduction->sum('social_insurance'))
+        {
+            $social_insurance_amount = $deduction->sum('social_insurance');
+        
+        } else {
+            $social_insurance_amount = 0;
+        }
+        
+        //生命保険料控除
+        $life_new_deduction1 = Helper::life_deducation($deduction->sum('life_premium_new'), 0);
+        $life_new_deduction2 = Helper::life_deducation($deduction->sum('ltc_premium'), 0);
+        $life_new_deduction3 = Helper::life_deducation($deduction->sum('pension_new'), 0);
+        
+        $life_old_deduction1 = Helper::life_deducation($deduction->sum('life_premium_old'), 1);
+        $life_old_deduction2 = Helper::life_deducation($deduction->sum('pension_old'), 1);
+        
+        
+        //　　上限額を考慮して、生命保険料控除を算出する.
+        $life_result = [];
+        array_push($life_result, Helper::life_max($life_new_deduction1, $life_new_deduction2, $life_new_deduction3, 0)); 
+        array_push($life_result, Helper::life_max($life_new_deduction1, $life_new_deduction2, ['income_tax' => 0, 'resident_tax' => 0], 1)); 
+        
+        
+        //地震保険料控除
+        $earthquake_deduction = [];
+        
+        if($deduction->sum('earthquake_insurance') > 50000) 
+        {
+            array_push($earthquake_deduction, 50000);
+            array_push($earthquake_deduction, 25000);
+        } else {
+            array_push($earthquake_deduction, $deduction->sum('earthquake_insurance'));
+            array_push($earthquake_deduction, $deduction->sum('earthquake_insurance')/2);
+        }
+        
+        //寡夫・寡婦控除
+        $widower_amount = [];
+        
+        //　所得税
+        if ($deduction->sum('widower')===1) 
+        {
+            array_push($widower_amount, 270000);
+        } elseif ($deduction->sum('widow_normal')===1) 
+        {
+            array_push($widower_amount, 270000);
+        } elseif ($deduction->sum('widow_special')===1) 
+        {
+            array_push($widower_amount, 350000);    
+        } else {
+            array_push($widower_amount, 0);    
+        }
+        
+        //　住民税
+        if ($deduction->sum('widower')===1) 
+        {
+            array_push($widower_amount, 260000);
+        } elseif ($deduction->sum('widow_normal')===1) 
+        {
+            array_push($widower_amount, 260000);
+        } elseif ($deduction->sum('widow_special')===1) 
+        {
+            array_push($widower_amount, 300000);    
+        } else {
+            array_push($widower_amount, 0);    
+        }
+        
+        
+        //配偶者（特別）控除
+        $spouse_deduction = [];
+        
+        //　所得税
+        if ($deduction->sum('spouse') === 1)
+        {   
+            if ($deduction->sum('spouse_income') > 380000)   //配偶者所得が38万円超の場合（配偶者特別控除の判定）
+            {
+                array_push($spouse_deduction, Helper::spose_special($income_amount, $deduction->sum('spouse_income'), 0));
+                
+            } else {  //配偶者所得がnull又は38万円以下の場合
+                if ($deduction->sum('spouse_old') === 1)   //老人控除対象配偶者の場合
+                {
+                    if($income_amount <= 9000000) //納税者が所得900万円以下
+                    {
+                        array_push($spouse_deduction, 480000);
+                    } elseif ($income_amount <= 9500000) 
+                    {
+                        array_push($spouse_deduction, 320000);
+                    } elseif ($income_amount <= 10000000)  {
+                        array_push($spouse_deduction, 160000);
+                    } else {
+                        array_push($spouse_deduction, 0);
+                    } 
+                } 
+                else //控除対象配偶者の場合
+                {
+                    if($income_amount <= 9000000) //納税者が所得900万円以下
+                    {
+                        array_push($spouse_deduction, 380000);
+                    } elseif ($income_amount <= 9500000) 
+                    {
+                        array_push($spouse_deduction, 260000);
+                    } elseif ($income_amount <= 10000000)  {
+                        array_push($spouse_deduction, 130000);
+                    } else {
+                        array_push($spouse_deduction, 0);
+                    } 
+                }
+            }
+        } else { // nullまたは0（配偶者無）
+            array_push($spouse_deduction, 0);
+        }
+        
+        
+        //　住民税
+        if ($deduction->sum('spouse') === 1)
+        {   
+            if ($deduction->sum('spouse_income') > 380000)   //配偶者所得が38万円超の場合（配偶者特別控除の判定）
+            {
+                array_push($spouse_deduction, Helper::spose_special($income_amount, $deduction->sum('spouse_income'), 1));
+                
+            } else {  //配偶者所得がnull又は38万円以下の場合
+                if ($deduction->sum('spouse_old') === 1)   //老人控除対象配偶者の場合
+                {
+                    if($income_amount <= 9000000) //納税者が所得900万円以下
+                    {
+                        array_push($spouse_deduction, 380000);
+                    } elseif ($income_amount <= 9500000) 
+                    {
+                        array_push($spouse_deduction, 260000);
+                    } elseif ($income_amount <= 10000000)  {
+                        array_push($spouse_deduction, 130000);
+                    } else {
+                        array_push($spouse_deduction, 0);
+                    } 
+                } 
+                else //控除対象配偶者の場合
+                {
+                    if($income_amount <= 9000000) //納税者が所得900万円以下
+                    {
+                        array_push($spouse_deduction, 330000);
+                    } elseif ($income_amount <= 9500000) 
+                    {
+                        array_push($spouse_deduction, 220000);
+                    } elseif ($income_amount <= 10000000)  {
+                        array_push($spouse_deduction, 110000);
+                    } else {
+                        array_push($spouse_deduction, 0);
+                    } 
+                }
+            }
+        } else { // nullまたは0（配偶者無）
+            array_push($spouse_deduction, 0);
+        }
+        
+        
+        //扶養控除
+        $dependent_amount = [0,0];
+        
+        if ($deduction->sum('dependent_relatives_for_deduction') > 0 )
+        {
+            $dependent_amount[0] += $deduction->sum('dependent_relatives_for_deduction') * 380000;
+            $dependent_amount[1] += $deduction->sum('dependent_relatives_for_deduction') * 330000;
+        }
+        
+        if ($deduction->sum('specific_dependent') > 0 )
+        {
+            $dependent_amount[0] += $deduction->sum('specific_dependent') * 630000;
+            $dependent_amount[1] += $deduction->sum('specific_dependent') * 450000;
+        }
+        
+        if ($deduction->sum('elderly_dependent_relative') > 0 )
+        {
+            $dependent_amount[0] += $deduction->sum('elderly_dependent_relative') * 480000;
+            $dependent_amount[1] += $deduction->sum('elderly_dependent_relative') * 380000;
+        }
+        
+        if ($deduction->sum('elderly_dependent_relative_living_together') > 0 )
+        {
+            $dependent_amount[0] += $deduction->sum('elderly_dependent_relative_living_together') * 580000;
+            $dependent_amount[1] += $deduction->sum('elderly_dependent_relative_living_together') * 450000;
+        }
+        
+        //医療費控除
+        
+        if ($deduction->sum('medical_bills_income') > 0 ) 
+        {
+            if (100000 > $income_amount*0.05) 
+            {
+                if ($medical_amount - $income_amount*0.05 > 0)
+                {
+                    $medical_amount = $deduction->sum('medical_bills_income') - $income_amount*0.05;
+                } else  {
+                    $medical_amount = 0;
+                }
+                
+            } else {
+                if ($medical_amount - 100000 > 0)
+                {
+                    $medical_amount = $deduction->sum('medical_bills_income') - 100000;
+                } else  {
+                    $medical_amount = 0;
+                }
+            }
+        
+        } else {
+            $medical_amount = 0;
+        }
+
+        // 基礎控除
+        $basic_exemption = [380000,330000];
+        
+        // 課税所得金額
+        $taxable_income_amount = array(
+            $income_amount - $social_insurance_amount - $life_result[0] - $earthquake_deduction[0] - $widower_amount[0] - $spouse_deduction[0] - $dependent_amount[0] - $medical_amount,
+            $income_amount - $social_insurance_amount - $life_result[1] - $earthquake_deduction[1] - $widower_amount[1] - $spouse_deduction[1] - $dependent_amount[1] - $medical_amount
+        );
+        
+        if ($taxable_income_amount[0] > 380000) 
+        {
+            $taxable_income_amount[0] -= 380000;
+        } else {
+            $taxable_income_amount[0] = 0;
+        }
+        
+        if ($taxable_income_amount[1] > 330000) 
+        {
+            $taxable_income_amount[1] -= 330000;
+        } else {
+            $taxable_income_amount[1] = 0;
+        }
+        
+        // 千円未満切捨て
+        $taxable_income_amount[0] = floor(($taxable_income_amount[0])/1000)*1000;
+        $taxable_income_amount[1] = floor(($taxable_income_amount[1])/1000)*1000;
+        
+        
+        // 税額計算
+        $tax_val[0] = Helper::income_tax_result($taxable_income_amount[0]);
+        $tax_val[1] = Helper::resident_tax_result($taxable_income_amount[1]);
     
-
-
+        $data = [
+            'user' => $user,
+            'deduction_amount' => $deduction_amount,                //差引金額
+            'blue_declaration_amount' => $blue_declaration_amount,  //青色申告特別控除額
+            'income_amount' => $income_amount,                      //所得金額      
+            'social_insurance_amount' => $social_insurance_amount,  //社会保険料控除      
+            'life_result' => $life_result,                          //生命保険料控除額
+            'earthquake_deduction' => $earthquake_deduction,        //地震保険料控除額
+            'widower_amount' => $widower_amount,                    //寡夫・寡婦控除額     
+            'spouse_deduction' => $spouse_deduction,                //配偶者（特別）控除額
+            'dependent_amount' => $dependent_amount,                //扶養控除額
+            'medical_amount' => $medical_amount,                    //医療費控除
+            'basic_exemption' => $basic_exemption,                  //基礎控除
+            'taxable_income_amount' => $taxable_income_amount,      //課税所得金額
+            'tax_val' => $tax_val,                                  //税額
+        ];
+        
+        return $data;
+    }
 }
 

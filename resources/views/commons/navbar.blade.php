@@ -11,6 +11,8 @@
             <ul class="navbar-nav mr-auto"></ul>
             <ul class="navbar-nav">
                 @if (Auth::check())
+                    {{-- ユーザー情報へのリンク --}}
+                    <li class="nav-item">{!! link_to_route('analyses.user_get', 'Users', [], ['class' => 'nav-link']) !!}</li>
                     {{-- ログアウトへのリンク --}}
                     <li class="nav-item">{!! link_to_route('logout.get', 'Logout', [], ['class' => 'nav-link']) !!}</li>
                 @else
