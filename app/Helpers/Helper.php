@@ -9,6 +9,7 @@ class Helper
     // 所得税の計算
     public static function income_tax_result($taxable_income_amount)
     {   
+        
         if ($taxable_income_amount <= 1950000)
         {
             $income_tax = $taxable_income_amount * 0.05;
@@ -38,7 +39,11 @@ class Helper
             $income_tax = ($taxable_income_amount-4796000) * 0.45;
         }
         
-        $income_tax *= 100.021;
+        $income_tax *= 1.021;
+        
+        // 千円未満切捨て
+        $income_tax = floor(($income_tax)/1000)*1000;
+        
         return $income_tax;
     }
     
