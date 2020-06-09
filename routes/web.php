@@ -34,5 +34,12 @@ Route::group(['middleware' => ['auth']], function () {
         
         Route::get('user', 'AnalysesController@user_show')->name('analyses.user_get');
         Route::post('user', 'AnalysesController@user_store')->name('analyses.user_post');
+        
+        
     });
+});
+
+//　認証不要
+Route::group(['prefix' => 'analyses'], function () {
+    Route::get('user/{id}/{old_email}/{new_email}/{mail_change_token}', 'AnalysesController@email_change')->name('analyses.email_change');
 });

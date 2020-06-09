@@ -405,18 +405,31 @@ class AnalysesController extends Controller
             // 認証済みユーザ（閲覧者）を取得
             $user = \Auth::user();
             
-            //変更前のメールアドレス保持しておく
-            $old_email = $user->email;
-            
-            $user->email = $request->email;
-            $user->save();
-
-            
             // メール送信
             Mail::to($request->email)->send(new App\Mail\UserMail($request->email));
         }
         \Session::flash('flash_message', 'メールを送りました。');
         return redirect('/');
     }
+    
+    
+    public function email_change($id, $old_email, $new_email, $mail_change_token)
+    {
+        $user = App\User::where('id', $id)->
+                            where('email', $old_email)->
+                            where('mail_change_token', $mail_change_token)
+                            ->first();
+                            
+        if ($user === null) {
+            return view('users.change_err.blade');
+            
+        } else {
+            
+            $user->email = $new_email;
+            $user->save();
+            
+            return view('users.user_change');
+        }
+    }   
 }
 
