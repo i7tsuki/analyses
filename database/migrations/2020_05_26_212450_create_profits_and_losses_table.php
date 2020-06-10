@@ -48,6 +48,8 @@ class CreateProfitsAndLossesTable extends Migration
      */
     public function down()
     {
+        //Schema::dropIfExists('profits_and_losses');
+        $table->dropForeign('profits_and_losses_user_id_foreign');
         Schema::dropIfExists('profits_and_losses');
     }
 }
