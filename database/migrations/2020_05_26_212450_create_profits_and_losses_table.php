@@ -48,9 +48,12 @@ class CreateProfitsAndLossesTable extends Migration
      */
     public function down()
     {
+        /*
         Schema::table('profit_and_losses', function (Blueprint $table) {
                     $table->dropForeign('profit_and_losses_user_id_foreign');
         });
+        Schema::dropIfExists('profit_and_losses');
+        */
         Schema::dropIfExists('profit_and_losses');
     }
 }
